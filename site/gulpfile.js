@@ -39,6 +39,7 @@ const serveStatic = require('serve-static');
 const spawn = childprocess.spawn;
 const swig = require('swig-templates');
 const url = require('url');
+const revCollector = require('gulp-rev-collector');
 
 // DEFAULT_GA is the default Google Analytics tracker ID
 const DEFAULT_GA = 'UA-49880327-14';
@@ -913,7 +914,7 @@ const collectCodelabs = () => {
 // bucket. This only uploads the codelabs, the views remain unchanged.
 gulp.task('publish:staging:codelabs', (callback) => {
   const opts = { dry: DRY_RUN, deleteMissing: DELETE_MISSING };
-  const src = path.join('dist', CODELABS_NAMESPACE, '/');
+  const src = path.join('dist', CODELABS_NAMESPACE, './');
   const dest = gcs.bucketFolderPath(STAGING_BUCKET, CODELABS_NAMESPACE);
   gcs.rsync(src, dest, opts, callback);
 });
@@ -939,4 +940,16 @@ gulp.task('publish:prod:codelabs', (callback) => {
 gulp.task('publish:prod:views', (callback) => {
   const opts = { exclude: CODELABS_NAMESPACE, dry: DRY_RUN, deleteMissing: DELETE_MISSING };
   gcs.rsync(STAGING_BUCKET, PROD_BUCKET, opts, callback);
+});
+
+
+gulp.task('rev', function () {
+    return gulp.src(['dist/index.html'])
+        .pipe(revCollector({
+            replaceReved: true,
+            dirReplacements: {
+                '*.css': './*.css'
+            }
+        }) )
+        .pipe(gulp.dest('dist') );
 });
